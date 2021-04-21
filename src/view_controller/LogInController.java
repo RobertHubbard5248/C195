@@ -41,13 +41,14 @@ public class LogInController implements Initializable {
     @FXML
     void onActionLogin(ActionEvent event) throws IOException {
         if(userAuthentication()) {
+            userLog(user, "Successful");
             Stage stage = (Stage) ((Button) event.getSource()).getScene().getWindow();
             Parent scene = FXMLLoader.load(getClass().getResource("/view_controller/MainMenu.fxml"));
             stage.setScene(new Scene(scene));
             stage.centerOnScreen();
             stage.setTitle("Scheduling App");
             stage.show();
-        }
+        } else userLog(user, "Unsuccessful");
     }
     // TODO = Case sensitive.
     private boolean userAuthentication() throws FileNotFoundException {
@@ -72,7 +73,6 @@ public class LogInController implements Initializable {
                 user = UserImp.getUser(userNameTextField.getText());
                 if (userName.equals(user.getUserName()) && password.equals(user.getPassword())) {
                     // TODO = Reminders
-                    userLog(user);
                     return true;
                 } else {
                     Alert alert = new Alert(Alert.AlertType.ERROR, "Incorrect Password");
@@ -89,8 +89,8 @@ public class LogInController implements Initializable {
         }
         return false;
     }
-    private void userLog(User user) {
-        String fileName = "src/files/log.txt";
+    private void userLog(User user, String isSuccessful) {
+        String fileName = "src/files/login_activity.txt";
         try {
 
             // Create FileWriter and PrintWriter
@@ -98,7 +98,7 @@ public class LogInController implements Initializable {
             PrintWriter outFile = new PrintWriter(fileWriter);
             // TODO = Get consistant time
             Instant instant = Instant.now();
-            outFile.println(user.getUserName() + ": " + instant + " -UTC");
+            outFile.println(user.getUserName() + ": " + instant + " -UTC | " + isSuccessful + " login");
             // Close PrintWriter
             outFile.close();
         } catch (FileNotFoundException e) {

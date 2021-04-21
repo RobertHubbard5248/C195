@@ -80,7 +80,16 @@ public class MainMenuController implements Initializable {
 
     @FXML
     void onActionDeleteAppointment(ActionEvent event) {
-
+        try {
+            AppointmentImp.deleteAppointment(appointmentsTableView.getSelectionModel().getSelectedItem());
+            setAppointmentTableView();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        } catch (NullPointerException e) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setContentText("Please select an appointment");
+            alert.showAndWait();
+        }
     }
 
     @FXML
@@ -89,27 +98,48 @@ public class MainMenuController implements Initializable {
         loader.setLocation(getClass().getResource("/view_controller/Appointments.fxml"));
         loader.load();
         AppointmentsController appointmentsController = loader.getController();
-        appointmentsController.sendAppointment(appointmentsTableView.getSelectionModel().getSelectedItem());
+        try {
+            appointmentsController.sendAppointment(appointmentsTableView.getSelectionModel().getSelectedItem());
 
-        stage = (Stage) ((Button) event.getSource()).getScene().getWindow();
-        scene = loader.getRoot();
-        stage.setScene(new Scene(scene));
-        stage.centerOnScreen();
-        stage.setTitle("Scheduling App");
-        stage.show();
+            stage = (Stage) ((Button) event.getSource()).getScene().getWindow();
+            scene = loader.getRoot();
+            stage.setScene(new Scene(scene));
+            stage.centerOnScreen();
+            stage.setTitle("Scheduling App");
+            stage.show();
+        } catch (NullPointerException e) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setContentText("Please select an appointment.");
+            alert.showAndWait();
+        }
     }
-
 
     @FXML
     void onActionAddCustomer(ActionEvent event) throws IOException {
         changeView("Customers", event);
     }
 
-    //TODO - Remove customers appointments
     @FXML
     void onActionDeleteCustomer(ActionEvent event) throws SQLException {
-        CustomerImp.deleteCustomer(customerTableView.getSelectionModel().getSelectedItem());
-        setCustomerTableView();
+        try {
+            Customer customer = customerTableView.getSelectionModel().getSelectedItem();
+            if(AppointmentImp.customerHasAppointments(customer)) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setContentText(customer.getCustomerName() + " is assigned to at least one appointment.  " +
+                        "Please delete any associated appointments before deleting this customer.");
+                alert.showAndWait();
+            } else {
+                CustomerImp.deleteCustomer(customer);
+                setCustomerTableView();
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setContentText("Customer: " + customer.getCustomerName() + " has been deleted.");
+                alert.showAndWait();
+            }
+        } catch (NullPointerException e) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setContentText("Please select a customer");
+            alert.showAndWait();
+        }
     }
 
     @FXML
@@ -133,7 +163,6 @@ public class MainMenuController implements Initializable {
             alert.setContentText("Please select a customer");
             alert.showAndWait();
         }
-
     }
 
     @FXML

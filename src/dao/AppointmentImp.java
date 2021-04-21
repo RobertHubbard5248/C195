@@ -1,7 +1,5 @@
 package dao;
 
-import com.mysql.cj.exceptions.ConnectionIsClosedException;
-import com.mysql.cj.xdevapi.SqlStatement;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import model.Appointment;
@@ -9,7 +7,6 @@ import model.Contact;
 import model.Customer;
 import model.User;
 
-import java.net.ConnectException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -42,7 +39,6 @@ public class AppointmentImp {
             preparedStatement.execute();
         } catch (SQLException e) {
             e.printStackTrace();
-            e.getMessage();
             System.out.println("Prepared Statement: " + preparedStatement);
         }
     }
@@ -93,7 +89,7 @@ public class AppointmentImp {
         preparedStatement.execute();
         resultSet = preparedStatement.getResultSet();
         try {
-            while (resultSet.next()) {
+            if (resultSet.next()) {
                 String title = resultSet.getString("Title");
                 String description = resultSet.getString("Description");
                 String location = resultSet.getString("Location");
@@ -110,6 +106,41 @@ public class AppointmentImp {
                 return appointment;
             }
         } catch (SQLException e){
+            System.out.println(e.getMessage());
+        }
+        return null;
+    }
+
+    public static ObservableList<Appointment> getAppointments(Customer customer) throws SQLException {
+        ObservableList<Appointment> appointments = FXCollections.observableArrayList();
+        Appointment appointment;
+        ResultSet resultSet;
+        Connection connection = DBConnection.getConnection();
+        String SQLString = "SELECT * FROM appointments WHERE Customer_ID = " + customer.getCustomerID() + ";";
+        Query.setPreparedStatement(connection, SQLString);
+        PreparedStatement preparedStatement = Query.getPreparedStatement();
+        preparedStatement.execute();
+        resultSet = preparedStatement.getResultSet();
+        try {
+            while (resultSet.next()) {
+                int id = resultSet.getInt("Appointment_ID");
+                String title = resultSet.getString("Title");
+                String description = resultSet.getString("Description");
+                String location = resultSet.getString("Location");
+                String type = resultSet.getString("Type");
+                LocalDateTime start = resultSet.getTimestamp("Start").toLocalDateTime();
+                LocalDateTime end = resultSet.getTimestamp("End").toLocalDateTime();
+                String lastUpdatedBy = resultSet.getString("Last_Updated_By");
+
+                User user = UserImp.getUser(resultSet.getInt("User_ID"));
+                Contact contact = ContactImp.getContact(resultSet.getInt("Contact_ID"));
+
+                appointment = new Appointment(id, title, description, location, type, start,
+                        end, lastUpdatedBy, customer, user, contact);
+                appointments.add(appointment);
+            }
+            return appointments;
+        } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
         return null;
@@ -140,7 +171,28 @@ public class AppointmentImp {
         preparedStatement.execute();
 
     }
-    public static void deleteAppointment() {
+
+    public static void deleteAppointment(Appointment appointment) throws SQLException {
+        Connection connection = DBConnection.getConnection();
+        String SQLString = "DELETE FROM appointments WHERE Appointment_ID = " + appointment.getAppointmentID();
+        Query.setPreparedStatement(connection, SQLString);
+        PreparedStatement preparedStatement = Query.getPreparedStatement();
+        preparedStatement.execute();
+    }
+
+    public static boolean customerHasAppointments(Customer customer) throws SQLException {
+        ResultSet resultSet;
+        Connection connection = DBConnection.getConnection();
+        String SQLStatement = "SELECT * FROM appointments WHERE Customer_ID = " + customer.getCustomerID() + ";";
+        Query.setPreparedStatement(connection, SQLStatement);
+        PreparedStatement preparedStatement = Query.getPreparedStatement();
+        preparedStatement.execute();
+        resultSet = preparedStatement.getResultSet();
+
+            if (resultSet.next()) {
+                return true;
+            } else return false;
+
 
     }
 
