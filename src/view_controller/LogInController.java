@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URL;
 import java.sql.SQLException;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ResourceBundle;
 
@@ -91,11 +92,13 @@ public class LogInController implements Initializable {
     private void userLog(User user) {
         String fileName = "src/files/log.txt";
         try {
+
             // Create FileWriter and PrintWriter
             FileWriter fileWriter = new FileWriter(fileName, true);
             PrintWriter outFile = new PrintWriter(fileWriter);
             // TODO = Get consistant time
-            outFile.println(user.getUserName() + ": " + LocalDateTime.now());
+            Instant instant = Instant.now();
+            outFile.println(user.getUserName() + ": " + instant + " -UTC");
             // Close PrintWriter
             outFile.close();
         } catch (FileNotFoundException e) {
